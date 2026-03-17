@@ -14,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -21,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.practicum.vkeducation.R
 import com.practicum.vkeducation.presentation.theme.VkEducationTheme
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
@@ -32,11 +34,23 @@ fun HomeScreen(
     val events = viewModel.events
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
-    ObserveEvents(
-        events = events,
-        snackbarHostState = snackbarHostState,
-    )
+    // ИСПРАВЛЕНО: получаем строку здесь, в композиции
+    val underDevelopmentText = stringResource(R.string.under_development)
+
+    LaunchedEffect(Unit) {
+        events.collect { event ->
+            when (event) {
+                is HomeEvent.OnLogoClick -> {
+                    coroutineScope.launch {
+                        // ИСПРАВЛЕНО: используем готовую строку
+                        snackbarHostState.showSnackbar(underDevelopmentText)
+                    }
+                }
+            }
+        }
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -58,24 +72,6 @@ fun HomeScreen(
                     onRefreshClick = { viewModel.getShortAppDetails() },
                 )
                 is HomeState.Loading -> HomeLoading()
-            }
-        }
-    }
-}
-
-@Composable
-private fun ObserveEvents(
-    events: Flow<HomeEvent>,
-    snackbarHostState: SnackbarHostState
-) {
-    val underDevelopementText = stringResource(R.string.under_development)
-
-    LaunchedEffect(Unit) {
-        events.collect { event ->
-            when (event) {
-                is HomeEvent.OnLogoClick -> {
-                    snackbarHostState.showSnackbar(underDevelopementText)
-                }
             }
         }
     }
