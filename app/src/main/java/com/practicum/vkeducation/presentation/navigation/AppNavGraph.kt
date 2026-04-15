@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.practicum.vkeducation.presentation.appdetails.AppDetailsScreen
 import com.practicum.vkeducation.presentation.home.HomeScreen
 
@@ -15,17 +16,20 @@ fun AppNavGraph(
 ) {
     NavHost(
         navController = navController,
-        startDestination = Routes.HOME.name,
+        startDestination = Routes.HOME,
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None }
     ) {
-        composable(Routes.HOME.name) {
+        composable<Routes.HOME> {
             HomeScreen(
-                onAppClick = { navController.navigate(Routes.APP_DETAILS.name) }
+                onAppClick = { id ->
+                    navController.navigate(Routes.APP_DETAILS(id))
+                }
             )
         }
 
-        composable(Routes.APP_DETAILS.name) {
+        composable<Routes.APP_DETAILS> { backStackEntry ->
+            val args = backStackEntry.toRoute<Routes.APP_DETAILS>()
             AppDetailsScreen(
                 onBackClick = { navController.popBackStack() }
             )

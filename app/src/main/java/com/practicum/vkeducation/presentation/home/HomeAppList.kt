@@ -22,7 +22,7 @@ import com.practicum.vkeducation.presentation.theme.VkEducationTheme
 internal fun HomeAppList(
     apps: List<ShortAppDetails>,
     modifier: Modifier = Modifier,
-    onAppClick: () -> Unit,
+    onAppClick: (String) -> Unit,
 ) {
     Box(
         modifier = modifier
@@ -45,7 +45,7 @@ internal fun HomeAppList(
                     title = app.name,
                     description = app.shortDescription,
                     category = app.category,
-                    onClick = onAppClick
+                    onClick = { onAppClick(app.id) }
                 )
                 HorizontalDivider()
             }
