@@ -18,7 +18,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.practicum.vkeducation.R
 import com.practicum.vkeducation.presentation.theme.VkEducationTheme
 import kotlinx.coroutines.flow.Flow
@@ -29,14 +29,13 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     onAppClick: () -> Unit
 ) {
-    val viewModel = viewModel<HomeViewModel>()
+    val viewModel = hiltViewModel<HomeViewModel>()
     val state by viewModel.state.collectAsState()
     val events = viewModel.events
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    // ИСПРАВЛЕНО: получаем строку здесь, в композиции
     val underDevelopmentText = stringResource(R.string.under_development)
 
     LaunchedEffect(Unit) {
@@ -44,7 +43,6 @@ fun HomeScreen(
             when (event) {
                 is HomeEvent.OnLogoClick -> {
                     coroutineScope.launch {
-                        // ИСПРАВЛЕНО: используем готовую строку
                         snackbarHostState.showSnackbar(underDevelopmentText)
                     }
                 }

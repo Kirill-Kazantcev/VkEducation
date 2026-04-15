@@ -2,26 +2,26 @@ package com.practicum.vkeducation.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.practicum.vkeducation.data.repository.HomeRepositoryImpl
-import com.practicum.vkeducation.domain.repository.HomeRepository
 import com.practicum.vkeducation.domain.usecase.GetAllShortAppDetailsUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class HomeViewModel : ViewModel() {
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val getAllShortAppDetailsUseCase: GetAllShortAppDetailsUseCase
+) : ViewModel() {
 
     private val _state = MutableStateFlow<HomeState>(HomeState.Loading)
     val state = _state.asStateFlow()
 
     private val _events = Channel<HomeEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
-
-    private val repository: HomeRepository = HomeRepositoryImpl()
-    private val getAllShortAppDetailsUseCase = GetAllShortAppDetailsUseCase(repository)
 
     init {
         getShortAppDetails()
