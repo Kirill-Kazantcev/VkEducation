@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.practicum.vkeducation
 
 import org.junit.Test
 
