@@ -3,6 +3,7 @@ package com.practicum.vkeducation.presentation.appdetails
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.practicum.vkeducation.data.repository.AppDetailsRepositoryImpl
+import com.practicum.vkeducation.domain.repository.AppDetailsRepository
 import com.practicum.vkeducation.domain.usecase.GetAppDetailsUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +20,7 @@ class AppDetailsViewModel : ViewModel() {
     private val _events = Channel<AppDetailsEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    private val repository = AppDetailsRepositoryImpl()
+    private val repository: AppDetailsRepository = AppDetailsRepositoryImpl()
     private val getAppDetailsUseCase = GetAppDetailsUseCase(repository)
 
     init {

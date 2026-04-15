@@ -2,8 +2,9 @@ package com.practicum.vkeducation.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.practicum.vkeducation.data.repository.HomeRepositoryImpl // Импортируем реализацию
-import com.practicum.vkeducation.domain.usecase.GetShortAppDetailsUseCase
+import com.practicum.vkeducation.data.repository.HomeRepositoryImpl
+import com.practicum.vkeducation.domain.repository.HomeRepository
+import com.practicum.vkeducation.domain.usecase.GetAllShortAppDetailsUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,8 +20,8 @@ class HomeViewModel : ViewModel() {
     private val _events = Channel<HomeEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    private val repository = HomeRepositoryImpl()
-    private val getShortAppDetailsUseCase = GetShortAppDetailsUseCase(repository)
+    private val repository: HomeRepository = HomeRepositoryImpl()
+    private val getAllShortAppDetailsUseCase = GetAllShortAppDetailsUseCase(repository)
 
     init {
         getShortAppDetails()
@@ -36,7 +37,7 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             _state.value = HomeState.Loading
             runCatching {
-                getShortAppDetailsUseCase()
+                getAllShortAppDetailsUseCase()
             }.onSuccess { apps ->
                 _state.value = HomeState.Content(appDetails = apps)
             }.onFailure {
