@@ -37,4 +37,9 @@
     <string name="app_details_error_refresh">Обновить</string>
 
     <string name="app_description">VK Education - приложение для обучения</string>
+
+    <string name="back_button">Назад</string>
+    <string name="favorite_button_on">Удалить из избранного</string>
+    <string name="favorite_button_off">Добавить в избранное</string>
+    <string name="share_button">Поделиться</string>
 </resources>
