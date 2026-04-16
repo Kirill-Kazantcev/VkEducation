@@ -11,6 +11,7 @@ import com.practicum.vkeducation.domain.repository.AppDetailsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -24,35 +25,36 @@ class AppDetailsRepositoryImpl @Inject constructor(
 ) : AppDetailsRepository {
 
     override suspend fun getAppDetails(id: String): AppDetails {
-        val entity = dao.getAppDetails(id)
-        return if (entity != null) {
-            entityMapper.toDomain(entity)
-        } else {
+        return withContext(Dispatchers.IO) {
+            val entity = dao.getAppDetails(id)
+            if (entity != null) {
+                return@withContext entityMapper.toDomain(entity)
+            }
+
             try {
                 val dto = appApi.getAppDetails(id)
                 val domain = dto.toDomain()
-                withContext(Dispatchers.IO) {
-                    dao.insertAppDetails(entityMapper.toEntity(domain))
-                }
-                domain
+                dao.insertAppDetails(entityMapper.toEntity(domain))
+                return@withContext domain
             } catch (e: Exception) {
                 val mockDto = AppDetailsMockApi.getAppDetails().copy(id = id)
                 val domain = mockDto.toDomain()
-                withContext(Dispatchers.IO) {
-                    dao.insertAppDetails(entityMapper.toEntity(domain))
-                }
-                domain
+                dao.insertAppDetails(entityMapper.toEntity(domain))
+                return@withContext domain
             }
         }
     }
 
     override suspend fun toggleWishlist(id: String) {
-        dao.toggleWishlist(id)
+        withContext(Dispatchers.IO) {
+            dao.toggleWishlist(id)
+        }
     }
 
     override fun observeAppDetails(id: String): Flow<AppDetails> {
         return dao.observeAppDetails(id)
             .filterNotNull()
             .map { entityMapper.toDomain(it) }
+            .flowOn(Dispatchers.IO)
     }
 }
