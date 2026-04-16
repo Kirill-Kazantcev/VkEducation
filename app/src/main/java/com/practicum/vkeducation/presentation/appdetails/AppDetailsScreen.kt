@@ -15,7 +15,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.practicum.vkeducation.R
 import com.practicum.vkeducation.presentation.theme.VkEducationTheme
 import kotlinx.coroutines.flow.Flow
@@ -24,7 +28,7 @@ import kotlinx.coroutines.flow.Flow
 fun AppDetailsScreen(
     onBackClick: () -> Unit,
 ) {
-    val viewModel = viewModel<AppDetailsViewModel>()
+    val viewModel = hiltViewModel<AppDetailsViewModel>()
     val state by viewModel.state.collectAsState()
     val events = viewModel.events
 
