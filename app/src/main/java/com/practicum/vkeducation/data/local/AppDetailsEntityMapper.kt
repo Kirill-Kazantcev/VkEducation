@@ -6,9 +6,9 @@ import com.practicum.vkeducation.domain.appdetails.AppDetails
 
 class AppDetailsEntityMapper {
     private val gson = Gson()
+    private val listType = object : TypeToken<List<String>>() {}.type
 
     fun toEntity(domain: AppDetails): AppDetailsEntity {
-        val screenshotsJson = domain.screenshotUrlList?.let { gson.toJson(it) }
         return AppDetailsEntity(
             id = domain.id,
             name = domain.name,
@@ -17,16 +17,13 @@ class AppDetailsEntityMapper {
             ageRating = domain.ageRating,
             size = domain.size,
             iconUrl = domain.iconUrl,
-            screenshots = screenshotsJson,
-            description = domain.description
+            screenshots = domain.screenshotUrlList?.let { gson.toJson(it) },
+            description = domain.description,
+            isInWishlist = domain.isInWishlist
         )
     }
 
     fun toDomain(entity: AppDetailsEntity): AppDetails {
-        val screenshotUrlList = entity.screenshots?.let {
-            val type = object : TypeToken<List<String>>() {}.type
-            gson.fromJson(it, type)
-        }
         return AppDetails(
             id = entity.id,
             name = entity.name,
@@ -35,8 +32,9 @@ class AppDetailsEntityMapper {
             ageRating = entity.ageRating,
             size = entity.size,
             iconUrl = entity.iconUrl,
-            screenshotUrlList = screenshotUrlList,
-            description = entity.description
+            screenshotUrlList = entity.screenshots?.let { gson.fromJson(it, listType) },
+            description = entity.description,
+            isInWishlist = entity.isInWishlist
         )
     }
 }
