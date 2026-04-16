@@ -18,20 +18,22 @@ class AppDetailsRepositoryImpl @Inject constructor(
 ) : AppDetailsRepository {
 
     override suspend fun getAppDetails(id: String): AppDetails {
-        val entity = dao.getAppDetails(id)
-        return if (entity != null) {
-            entityMapper.toDomain(entity)
-        } else {
+        return withContext(Dispatchers.IO) {
+            val entity = dao.getAppDetails(id)
+            if (entity != null) {
+                return@withContext entityMapper.toDomain(entity)
+            }
+
             try {
                 val dto = appApi.getAppDetails(id)
                 val domain = dto.toDomain()
-                withContext(Dispatchers.IO) {
-                    dao.insertAppDetails(entityMapper.toEntity(domain))
-                }
-                domain
+                dao.insertAppDetails(entityMapper.toEntity(domain))
+                return@withContext domain
             } catch (e: Exception) {
                 val mockDto = AppDetailsMockApi.getAppDetails().copy(id = id)
-                mockDto.toDomain()
+                val domain = mockDto.toDomain()
+                dao.insertAppDetails(entityMapper.toEntity(domain))
+                return@withContext domain
             }
         }
     }
