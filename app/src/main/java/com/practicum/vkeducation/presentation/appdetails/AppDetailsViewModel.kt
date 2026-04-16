@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.practicum.vkeducation.domain.usecase.GetAppDetailsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,7 +27,6 @@ class AppDetailsViewModel @Inject constructor(
     private val _events = Channel<AppDetailsEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    // Получаем id из навигации
     private val appId: String = savedStateHandle["id"] ?: ""
 
     init {
@@ -50,7 +50,7 @@ class AppDetailsViewModel @Inject constructor(
     }
 
     fun getAppDetails() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _state.value = AppDetailsState.Loading
             runCatching {
                 getAppDetailsUseCase(appId)
