@@ -1,29 +1,86 @@
 package com.practicum.vkeducation.presentation.appdetails
 
+import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.practicum.vkeducation.domain.appdetails.AppDetails
-import com.practicum.vkeducation.domain.appdetails.Category
+import com.practicum.vkeducation.domain.repository.AppDetailsRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
+import javax.inject.Inject
 
-class AppDetailsViewModel : ViewModel() {
+private const val TAG = "AppDetailsVM"
+
+@HiltViewModel
+class AppDetailsViewModel @Inject constructor(
+    private val repository: AppDetailsRepository,
+    private val savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     private val _state = MutableStateFlow<AppDetailsState>(AppDetailsState.Loading)
     val state = _state.asStateFlow()
 
-    private val _events = Channel<AppDetailsEvent>(BUFFERED)
+    private val _events = Channel<AppDetailsEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
+    private val appId: String = savedStateHandle["id"] ?: ""
+
     init {
-        getAppDetails()
+        loadAppDetails()
+        observeAppDetails()
+    }
+
+    private fun loadAppDetails() {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                repository.getAppDetails(appId)
+            }.onSuccess { appDetails ->
+                _state.value = AppDetailsState.Content(
+                    appDetails = appDetails,
+                    descriptionCollapsed = false,
+                )
+            }.onFailure { error ->
+                Log.e(TAG, "Ошибка загрузки", error)
+                _state.value = AppDetailsState.Error
+            }
+        }
+    }
+
+    fun toggleWishlist() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.toggleWishlist(appId)
+        }
+    }
+
+    private fun observeAppDetails() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.observeAppDetails(appId)
+                .catch { error ->
+                    Log.e(TAG, "Ошибка в Flow", error)
+                }
+                .collect { appDetails ->
+                    _state.update { currentState ->
+                        if (currentState is AppDetailsState.Content) {
+                            AppDetailsState.Content(
+                                appDetails = appDetails,
+                                descriptionCollapsed = currentState.descriptionCollapsed
+                            )
+                        } else {
+                            AppDetailsState.Content(
+                                appDetails = appDetails,
+                                descriptionCollapsed = false
+                            )
+                        }
+                    }
+                }
+        }
     }
 
     fun showUnderDevelopmentMessage() {
@@ -43,37 +100,6 @@ class AppDetailsViewModel : ViewModel() {
     }
 
     fun getAppDetails() {
-        viewModelScope.launch {
-            _state.value = AppDetailsState.Loading
-
-            runCatching {
-                // Эмулируем загрузку с бэкенда
-                delay(2.seconds)
-
-                val appDetails = AppDetails(
-                    id = "1", // ИСПРАВЛЕНО: добавлен id
-                    name = "Гильдия Героев: Экшен ММО РПГ",
-                    developer = "VK Play",
-                    category = Category.GAME,
-                    ageRating = 12,
-                    size = 223.7f,
-                    screenshotUrlList = listOf(
-                        "https://static.rustore.ru/imgproxy/-y8kd-4B6MQ-1OKbAbnoAIMZAzvoMMG9dSiHMpFaTBc/preset:web_scr_lnd_335/plain/https://static.rustore.ru/apk/393868735/content/SCREENSHOT/dfd33017-e90d-4990-aa8c-6f159d546788.jpg@webp",
-                        "https://static.rustore.ru/imgproxy/dZCvNtRKKFpzOmGlTxLszUPmwi661IhXynYZGsJQvLw/preset:web_scr_lnd_335/plain/https://static.rustore.ru/apk/393868735/content/SCREENSHOT/60ec4cbc-dcf6-4e69-aa6f-cc2da7de1af6.jpg@webp",
-                        "https://static.rustore.ru/imgproxy/g5whSI1uNqaL2TUO7TFfM8M63vXpWXNCm2vlX4Ahvc4/preset:web_scr_lnd_335/plain/https://static.rustore.ru/apk/393868735/content/SCREENSHOT/c2dde8bc-c4ab-482a-80a5-2789149f598d.jpg@webp",
-                        "https://static.rustore.ru/imgproxy/TjeurtC7BczOVJt74XhjGYuQnG1l4rx6zpDqyMb00GY/preset:web_scr_lnd_335/plain/https://static.rustore.ru/apk/393868735/content/SCREENSHOT/08318f76-7a9c-43aa-b4a7-1aa878d00861.jpg@webp",
-                    ),
-                    iconUrl = "https://static.rustore.ru/imgproxy/APsbtHxkVa4MZ0DXjnIkSwFQ_KVIcqHK9o3gHY6pvOQ/preset:web_app_icon_62/plain/https://static.rustore.ru/apk/393868735/content/ICON/3f605e3e-f5b3-434c-af4d-77bc5f38820e.png@webp",
-                    description = "Легендарный рейд героев в Фэнтези РПГ. Станьте героем гильдии и зразите мастера подземелья!"
-                )
-
-                _state.value = AppDetailsState.Content(
-                    appDetails = appDetails,
-                    descriptionCollapsed = false,
-                )
-            }.onFailure {
-                _state.value = AppDetailsState.Error
-            }
-        }
+        loadAppDetails()
     }
 }
